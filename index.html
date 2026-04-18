@@ -1627,7 +1627,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePhone()
   `;
   var fsrc = `
     #ifdef GL_ES
-    precision mediump float;
+    precision highp float;
     #endif
     uniform float time;
     uniform vec2 resolution;
@@ -1669,9 +1669,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePhone()
       vec2 uv=gl_FragCoord.xy/resolution.xy-0.5;
       uv.x*=resolution.x/resolution.y;
       uv*=curvature*SIZE;
-      float r=sqrt(dot(uv,uv));
-      float x=dot(normalize(uv),vec2(.5,0.))+t;
-      float y=dot(normalize(uv),vec2(.0,.5))+t;
+      float r=length(uv);
+      vec2 normalized_uv = uv / (r + 0.0001);
+      float x=dot(normalized_uv,vec2(.5,0.))+t;
+      float y=dot(normalized_uv,vec2(.0,.5))+t;
       float val=0.0;
       val=fbm(vec2(r+y*ray_density,r+x*ray_density));
       val=smoothstep(gamma*.02-.1,ray_brightness+(gamma*0.02-.1)+.001,val);
