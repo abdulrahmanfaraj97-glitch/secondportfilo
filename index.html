@@ -1639,7 +1639,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePhone()
     #define red   0.0
     #define green 0.5
     #define blue  1.0
-
     #define SIZE 0.2
 
     float rand(vec2 n){
@@ -1669,16 +1668,28 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closePhone()
       vec2 uv=gl_FragCoord.xy/resolution.xy-0.5;
       uv.x*=resolution.x/resolution.y;
       uv*=curvature*SIZE;
-      float r=length(uv);
-      vec2 normalized_uv = uv / (r + 0.0001);
-      float x=dot(normalized_uv,vec2(.5,0.))+t;
-      float y=dot(normalized_uv,vec2(.0,.5))+t;
-      float val=0.0;
-      val=fbm(vec2(r+y*ray_density,r+x*ray_density));
+      
+      // إضافة إزاحة مجهرية لتجنب الصفر المطلق (0,0) الذي يسبب الدائرة البيضاء
+      vec2 safe_uv = uv + 0.00001;
+      float r = length(safe_uv);
+      
+      // استخدام safe_uv للحسابات الاتجاهية
+      vec2 dir = safe_uv / r;
+      
+      float x=dot(dir,vec2(.5,0.))+t;
+      float y=dot(dir,vec2(.0,.5))+t;
+      
+      float val=fbm(vec2(r+y*ray_density,r+x*ray_density));
       val=smoothstep(gamma*.02-.1,ray_brightness+(gamma*0.02-.1)+.001,val);
       val=sqrt(val);
+      
       vec3 col=val/vec3(red,green,blue);
       col=1.-col;
+      
+      // إخفاء أي خلل متبقي في المركز تماماً عن طريق دمج اللون مع الخلفية في المركز
+      float center_mask = smoothstep(0.0, 0.1, r);
+      col = mix(vec3(0.0, 0.0, 0.0), col, center_mask);
+      
       float rad=125.;
       col=mix(col,vec3(1.),rad-166.667*r);
       vec4 cfinal=mix(vec4(col,1.0),vec4(0.0,0.0,.0,1.0),0.01);
